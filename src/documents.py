@@ -1,6 +1,3 @@
-"""
-Document Storage, PDF Processing, and Upload Handling
-"""
 import os
 import re
 import json
@@ -15,11 +12,7 @@ from config import (
     DOCUMENTS_DIR, INDEX_DIR,
     CHUNK_SIZE, CHUNK_OVERLAP, MIN_CHUNK_SIZE
 )
-
-# =============================================================================
-# Persistent Document Store
-# =============================================================================
-
+#docx store
 class PersistentDocumentStore:
     """Document store with JSON file persistence"""
     
@@ -91,12 +84,7 @@ class PersistentDocumentStore:
             "total_tables": total_tables,
             "total_images": total_images
         }
-
-
-# =============================================================================
-# Text Processing Functions
-# =============================================================================
-
+#txt process
 def extract_title_from_text(text: str, filename: str) -> str:
     """Extract a meaningful title from document text"""
     lines = text.strip().split('\n')
@@ -208,12 +196,7 @@ def extract_sections(text: str) -> List[Dict]:
                 break
     
     return sections
-
-
-# =============================================================================
-# PDF Extraction Functions
-# =============================================================================
-
+#Extractions func
 def extract_text_with_pymupdf(pdf_path: str) -> Tuple[List[Dict], Dict]:
     """Extract text and metadata from PDF"""
     pages = []
@@ -261,58 +244,46 @@ def extract_tables_with_pdfplumber(pdf_path: str) -> List[Dict]:
                 }
                 
                 page_tables = page.extract_tables(table_settings)
-                
-                # If no tables found with lines, try text-based extraction
                 if not page_tables:
                     table_settings = {
                         "vertical_strategy": "text",
                         "horizontal_strategy": "text",
                     }
                     page_tables = page.extract_tables(table_settings)
-                
                 for table_idx, table in enumerate(page_tables):
                     if table and len(table) > 1:
-                        # Clean up the raw table data first
                         cleaned_table = []
                         for row in table:
                             if row:
                                 cleaned_row = []
                                 for cell in row:
                                     if cell:
-                                        # Clean cell value
                                         cell_str = str(cell).strip()
                                         cell_str = re.sub(r'\s+', ' ', cell_str)
                                         cleaned_row.append(cell_str)
                                     else:
                                         cleaned_row.append("")
-                                # Only add row if it has some content
                                 if any(c for c in cleaned_row):
                                     cleaned_table.append(cleaned_row)
-                        
                         if len(cleaned_table) < 2:
                             continue
-                        
-                        # Determine headers - first row with mostly non-empty cells
                         header_row_idx = 0
                         headers = []
                         
                         for idx, row in enumerate(cleaned_table):
                             non_empty = [c for c in row if c]
-                            # Good header row: most cells filled and looks like headers (not all numeric)
                             if len(non_empty) >= len(row) * 0.5:
-                                # Check if this looks like a header (not all cells are pure numbers)
                                 numeric_cells = sum(1 for c in non_empty if re.match(r'^[\d.,\-+%$]+$', c))
-                                if numeric_cells < len(non_empty) * 0.8:  # Less than 80% numeric
+                                if numeric_cells < len(non_empty) * 0.8: 
                                     headers = row
                                     header_row_idx = idx
                                     break
                         
-                        # Fallback: use first row as header
+    
                         if not headers:
                             headers = cleaned_table[0]
                             header_row_idx = 0
                         
-                        # Ensure all headers have names
                         final_headers = []
                         for i, h in enumerate(headers):
                             if h and h.strip():
@@ -320,7 +291,6 @@ def extract_tables_with_pdfplumber(pdf_path: str) -> List[Dict]:
                             else:
                                 final_headers.append(f"Column_{i+1}")
                         
-                        # Build rows from data after header row
                         rows = []
                         for row in cleaned_table[header_row_idx + 1:]:
                             row_dict = {}
@@ -330,11 +300,10 @@ def extract_tables_with_pdfplumber(pdf_path: str) -> List[Dict]:
                                     row_dict[final_headers[i]] = cell if cell else ""
                                     if cell:
                                         has_content = True
-                            # Only add rows with some content
                             if has_content:
                                 rows.append(row_dict)
                         
-                        if rows:  # Only add table if it has data rows
+                        if rows:
                             tables.append({
                                 "table_id": f"table_{page_num}_{table_idx}",
                                 "page": page_num + 1,
@@ -347,7 +316,6 @@ def extract_tables_with_pdfplumber(pdf_path: str) -> List[Dict]:
         print(f"Table extraction error: {e}")
     
     return tables
-
 
 def extract_images_with_pymupdf(pdf_path: str) -> List[Dict]:
     """Extract image metadata from PDF"""
@@ -370,40 +338,29 @@ def extract_images_with_pymupdf(pdf_path: str) -> List[Dict]:
     doc.close()
     return images
 
-
-# =============================================================================
-# PDF Processing Pipeline
-# =============================================================================
-
+#pipelines
 def process_pdf(pdf_path: str, original_filename: str, search_engine, store, vector_store=None) -> Dict:
     """Process PDF with all extraction and indexing"""
     
-    # Extract content
     pages, metadata = extract_text_with_pymupdf(pdf_path)
     tables = extract_tables_with_pdfplumber(pdf_path)
     images = extract_images_with_pymupdf(pdf_path)
     
-    # Combine all text
     full_text = "\n\n".join([p["text"] for p in pages])
     
-    # Generate smart title and filename
     extracted_title = metadata.get("title") or extract_title_from_text(full_text, original_filename)
     safe_filename = sanitize_filename(extracted_title)
-    
-    # Generate unique document ID
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     doc_id = f"{safe_filename}_{timestamp}"
-    
-    # Create document folder
+    #Saving files
     doc_folder = DOCUMENTS_DIR / doc_id
     doc_folder.mkdir(parents=True, exist_ok=True)
-    
-    # Copy PDF to document folder with new name
+
     new_pdf_name = f"{safe_filename}.pdf"
     new_pdf_path = doc_folder / new_pdf_name
     shutil.copy2(pdf_path, new_pdf_path)
     
-    # Create chunks
+    #Chunkings
     all_chunks = []
     for page in pages:
         page_chunks = smart_chunk_text(page["text"])
@@ -419,7 +376,7 @@ def process_pdf(pdf_path: str, original_filename: str, search_engine, store, vec
             chunk["filename"] = new_pdf_name
             all_chunks.append(chunk)
     
-    # Add to search engine
+    # search engine
     for chunk in all_chunks:
         chunk_id = f"{doc_id}_chunk_{chunk['chunk_id']}"
         search_engine.add_document(
@@ -433,7 +390,7 @@ def process_pdf(pdf_path: str, original_filename: str, search_engine, store, vec
             }
         )
     
-    # Add to vector store for semantic search
+    # sematic search data from vector
     if vector_store:
         print("Adding to vector store...")
         vector_docs = [
@@ -450,11 +407,8 @@ def process_pdf(pdf_path: str, original_filename: str, search_engine, store, vec
             for chunk in all_chunks
         ]
         vector_store.add_documents_batch(vector_docs)
-    
-    # Save search index
     search_engine.save_index(INDEX_DIR / "search_index.json")
-    
-    # Store document metadata
+
     doc_data = {
         "doc_id": doc_id,
         "filename": new_pdf_name,
@@ -475,8 +429,7 @@ def process_pdf(pdf_path: str, original_filename: str, search_engine, store, vec
     store.add_document(doc_id, doc_data)
     store.add_tables(doc_id, tables)
     store.add_images(doc_id, images)
-    
-    # Save document JSON
+
     doc_json_path = doc_folder / "document.json"
     with open(doc_json_path, 'w', encoding='utf-8') as f:
         json.dump({
@@ -499,10 +452,7 @@ def process_pdf(pdf_path: str, original_filename: str, search_engine, store, vec
         "image_count": len(images)
     }
 
-
-# =============================================================================
-# Table Search
-# =============================================================================
+#table searches
 
 def parse_numeric_condition(query: str) -> tuple:
     """Parse numeric conditions from query like 'more than 90', 'above 80', 'less than 50'"""
@@ -533,8 +483,7 @@ def check_numeric_condition(value: str, condition: tuple) -> bool:
     condition_type, threshold, threshold2 = condition
     if condition_type is None:
         return False
-    
-    # Extract numeric value from string
+
     import re
     numeric_match = re.search(r'(\d+(?:\.\d+)?)', str(value))
     if not numeric_match:
@@ -562,7 +511,6 @@ def search_tables(query: str, store: PersistentDocumentStore, limit: int = 10) -
     """Smart table search with numeric condition support"""
     query_lower = query.lower().strip()
     
-    # Stop words to filter out
     stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 
                   'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
                   'would', 'could', 'should', 'may', 'might', 'must', 'shall',
@@ -574,17 +522,13 @@ def search_tables(query: str, store: PersistentDocumentStore, limit: int = 10) -
                   'when', 'where', 'why', 'all', 'each', 'every', 'both',
                   'few', 'more', 'most', 'other', 'some', 'such', 'no', 'not',
                   'only', 'own', 'same', 'then', 'there', 'here', 'now', 'also'}
-    
-    # Filter query words - remove stop words and keep meaningful words
+  
     query_words = [w for w in query_lower.split() if len(w) > 1 and w not in stop_words]
     results = []
     
-    # Parse numeric conditions from query
     numeric_condition = parse_numeric_condition(query)
     has_numeric_condition = numeric_condition[0] is not None
     
-    # Extract potential column/field names from query
-    # Common patterns: "students who scored", "marks in", "percentage of"
     field_hints = []
     field_patterns = [
         r'(?:scored?|marks?|percentage|percent|grade|result|score)\s+(?:in\s+)?(\w+)?',
@@ -605,7 +549,6 @@ def search_tables(query: str, store: PersistentDocumentStore, limit: int = 10) -
         headers_lower = [str(h).lower() for h in headers]
         headers_text = " ".join(headers_lower)
         
-        # Score for header matches
         for word in query_words:
             if word in headers_text:
                 score += 3
@@ -616,24 +559,20 @@ def search_tables(query: str, store: PersistentDocumentStore, limit: int = 10) -
             row_text = " ".join(str(v).lower() for v in row.values())
             row_matched = False
             
-            # Check for exact query match in row
             if query_lower in row_text:
                 score += 5
                 row_matched = True
             
-            # Check for word matches
             for word in query_words:
                 if word in row_text:
                     score += 1
                     row_matched = True
-            
-            # Check numeric conditions across all numeric columns
+        
             if has_numeric_condition:
                 for header in headers:
                     cell_value = str(row.get(header, ""))
-                    # Check if this column might be numeric (contains numbers)
                     if re.search(r'\d', cell_value):
-                        # If field hints exist, prefer matching columns
+                        
                         header_lower = header.lower()
                         is_relevant_column = not field_hints or any(hint in header_lower for hint in field_hints)
                         
@@ -680,7 +619,6 @@ def format_table_for_context(table_results: List[Dict]) -> str:
         total_matching = table.get("total_matching", 0)
         total_rows = table.get("total_rows", 0)
         
-        # Build table context with clear structure
         table_text = f"\n[TABLE DATA from {doc_name}, Page {page}]\n"
         table_text += f"Column Headers: {', '.join(str(h) for h in headers)}\n"
         
@@ -689,7 +627,6 @@ def format_table_for_context(table_results: List[Dict]) -> str:
         
         table_text += "\n"
         
-        # Format as markdown table for clarity
         table_text += "| " + " | ".join(str(h) for h in headers) + " |\n"
         table_text += "|" + "|".join(["---"] * len(headers)) + "|\n"
         
