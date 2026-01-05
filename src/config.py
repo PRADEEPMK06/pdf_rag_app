@@ -1,18 +1,12 @@
-"""
-Configuration and Data Models
-"""
 import os
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
-# =============================================================================
-# Paths Configuration
-# =============================================================================
 
-BASE_DIR = Path(__file__).parent  # src/
-PROJECT_DIR = BASE_DIR.parent  # pdf_rag_app/
-FRONTEND_DIR = BASE_DIR  # index.html is in src/
+BASE_DIR = Path(__file__).parent  
+PROJECT_DIR = BASE_DIR.parent  
+FRONTEND_DIR = BASE_DIR  
 STORAGE_DIR = PROJECT_DIR / "storage"
 DATA_DIR = STORAGE_DIR / "data"
 UPLOAD_DIR = DATA_DIR / "uploads"
@@ -20,40 +14,25 @@ PROCESSED_DIR = DATA_DIR / "processed"
 INDEX_DIR = DATA_DIR / "index"
 DOCUMENTS_DIR = DATA_DIR / "documents"
 
-# Create all directories
+
 for dir_path in [UPLOAD_DIR, PROCESSED_DIR, INDEX_DIR, DOCUMENTS_DIR]:
     dir_path.mkdir(parents=True, exist_ok=True)
 
-# =============================================================================
-# Processing Configuration
-# =============================================================================
-
+#proces config
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 100
 MIN_CHUNK_SIZE = 50
-
-# =============================================================================
-# LLM Configuration
-# =============================================================================
-
+#LLM config
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")  # "openai", "ollama", or "none"
-
-# =============================================================================
-# MongoDB Configuration
-# =============================================================================
-
+#DB config
 MONGODB_URL = os.getenv("MONGODB_URL","mongodb://username:password@localhost:27017/mydatabase")
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "pdf_rag_db")
-
-# =============================================================================
-# API Data Models
-# =============================================================================
-
+#API model
 class SearchResponse(BaseModel):
     query: str
     search_type: str
