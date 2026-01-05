@@ -47,7 +47,7 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")  # "openai", "ollama", or "no
 # MongoDB Configuration
 # =============================================================================
 
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb+srv://pradeepmk797_db_user:qwertyuiopASDFGHJKL@cluster0.om91g1v.mongodb.net/")
+MONGODB_URL = os.getenv("MONGODB_URL","mongodb://username:password@localhost:27017/mydatabase")
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "pdf_rag_db")
 
 # =============================================================================
