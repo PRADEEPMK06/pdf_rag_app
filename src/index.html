@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Knowledge Base</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            padding-bottom: 80px;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            margin: 0 0.2rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .nav-link.active {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            transition: box-shadow 0.2s;
+        }
+
+        .result-card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card.table-result {
+            border-left-color: #10b981;
+        }
+
+        .result-text {
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, rgba(79, 70, 229, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .metadata-badge {
+            background: var(--bg-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+            display: inline-block;
+        }
+
+        .metadata-badge.text-primary {
+            background: rgba(79, 70, 229, 0.1);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+
+        .upload-zone i {
+            font-size: 3rem;
+            color: var(--primary-color);
+        }
+
+        .stats-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stats-card .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stats-card .label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .document-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .document-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .document-item:hover {
+            background-color: var(--bg-color);
+        }
+
+        .table-preview {
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        .table-preview table {
+            margin-bottom: 0;
+        }
+
+        .table-preview thead.table-dark th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        /* Relevance badges */
+        .relevance-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .relevance-exact { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .relevance-phrase { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .relevance-high { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+        .relevance-medium { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .relevance-related { background: linear-gradient(135deg, #64748b, #475569); color: white; }
+
+        /* AI Answer Card */
+        .ai-answer-card {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #0ea5e9;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.2);
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-answer-header {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            padding: 1rem 1.5rem;
+        }
+
+        .ai-answer-header h5 {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+
+        .ai-answer-header .bi-lightbulb {
+            color: #fbbf24;
+        }
+
+        .ai-answer-body {
+            padding: 1.5rem;
+            background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+        }
+
+        .ai-answer-content {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #1e293b;
+        }
+
+        .ai-answer-content p {
+            margin-bottom: 0.75rem;
+        }
+
+        .ai-answer-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-answer-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .ai-answer-content table th,
+        .ai-answer-content table td {
+            border: 1px solid #cbd5e1;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+
+        .ai-answer-content table th {
+            background: #f1f5f9;
+            font-weight: 600;
+        }
+
+        .ai-answer-content ul, .ai-answer-content ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .ai-answer-content li {
+            margin-bottom: 0.25rem;
+        }
+
+        .ai-answer-content code {
+            background: #f1f5f9;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .ai-sources {
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        /* Floating Chat Button */
+        .chat-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .chat-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(79, 70, 229, 0.5);
+        }
+
+        /* Chat Window */
+        .chat-window {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 400px;
+            max-width: calc(100vw - 60px);
+            height: 550px;
+            max-height: calc(100vh - 150px);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-window.open {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .chat-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .chat-close:hover {
+            opacity: 1;
+        }
+
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: var(--bg-color);
+        }
+
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background: white;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+        }
+
+        .chat-message.user {
+            text-align: right;
+        }
+
+        .chat-bubble {
+            display: inline-block;
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .user .chat-bubble {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .assistant .chat-bubble {
+            background: white;
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chat-sources {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 0.5rem 0;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+
+        /* Section visibility */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* Document content display */
+        .doc-content {
+            background: var(--bg-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --card-bg: #1e293b;
+                --text-color: #f1f5f9;
+                --border-color: #334155;
+            }
+            .chat-window { background: var(--card-bg); }
+            .chat-input-area { background: var(--card-bg); }
+            .assistant .chat-bubble { background: #334155; color: var(--text-color); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#" onclick="showSection('home')">
+                <i class="bi bi-file-earmark-pdf me-2"></i>
+                PDF Knowledge Base
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showSection('home')" data-section="home">
+                            <i class="bi bi-house me-1"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('documents')" data-section="documents">
+                            <i class="bi bi-folder me-1"></i> Documents
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('upload')" data-section="upload">
+                            <i class="bi bi-cloud-upload me-1"></i> Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('search')" data-section="search">
+                            <i class="bi bi-search me-1"></i> Search
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- HOME Section -->
+        <div id="homeSection" class="section active">
+            <!-- Stats Row -->
+            <div class="row mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="card stats-card">
+                        <div class="number" id="totalDocs">0</div>
+                        <div class="label">Documents</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card stats-card">
+                        <div class="number" id="totalChunks">0</div>
+                        <div class="label">Text Chunks</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card stats-card">
+                        <div class="number" id="totalTables">0</div>
+                        <div class="label">Tables</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card stats-card">
+                        <div class="number" id="totalImages">0</div>
+                        <div class="label">Images</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Search -->
+            <div class="search-container">
+                <h4 class="mb-3"><i class="bi bi-search me-2"></i>Quick Search</h4>
+                <div class="row">
+                    <div class="col-md-10">
+                        <input type="text" class="form-control search-input" id="quickSearchQuery" 
+                               placeholder="Search for information in your documents...">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100 h-100" onclick="quickSearch()">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Documents -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Documents</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recentDocuments" class="row">
+                        <div class="text-center text-muted py-4">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DOCUMENTS Section -->
+        <div id="documentsSection" class="section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-folder me-2"></i>All Documents</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadDocuments()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body document-list" id="documentList">
+                    <div class="text-center text-muted py-4">Loading documents...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UPLOAD Section -->
+        <div id="uploadSection" class="section">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="mb-4"><i class="bi bi-cloud-upload me-2"></i>Upload PDF Document</h4>
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                        <i class="bi bi-cloud-upload"></i>
+                        <h5 class="mt-3">Drop PDF files here or click to upload</h5>
+                        <p class="text-muted">Supports digital and scanned PDFs with OCR</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="uploadFile(this.files[0])">
+                    
+                    <div id="uploadProgress" class="mt-4" style="display: none;">
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="uploadProgressBar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-center mt-2" id="uploadStatus">Uploading...</p>
+                    </div>
+                    
+                    <div id="uploadResult" class="mt-4" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEARCH Section -->
+        <div id="searchSection" class="section">
+            <div class="search-container">
+                <h4 class="mb-3"><i class="bi bi-search me-2"></i>Advanced Search</h4>
+                <div class="row mb-3">
+                    <div class="col-md-9">
+                        <input type="text" class="form-control search-input" id="searchQuery" 
+                               placeholder="Enter your search query...">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100 h-100" onclick="performSearch()" id="searchBtn">
+                            <span class="spinner-border spinner-border-sm me-2" style="display:none;" id="searchSpinner"></span>
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Results Limit</label>
+                        <select class="form-select form-select-sm" id="searchLimit">
+                            <option value="10">10 results</option>
+                            <option value="20" selected>20 results</option>
+                            <option value="50">50 results</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Filter by Document</label>
+                        <select class="form-select form-select-sm" id="searchDocFilter">
+                            <option value="">All Documents</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="searchResults">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-search" style="font-size: 4rem; opacity: 0.3;"></i>
+                    <p class="mt-3">Enter a search query to find information</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <button class="chat-fab" id="chatFab" onclick="toggleChat()">
+        <i class="bi bi-chat-dots"></i>
+    </button>
+
+    <!-- Chat Window -->
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <h5><i class="bi bi-robot me-2"></i>AI Assistant</h5>
+            <button class="chat-close" onclick="toggleChat()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-message assistant">
+                <div class="chat-bubble">
+                    Hi! I'm your AI assistant. Ask me anything about your documents and I'll search through them to find answers.
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <div class="input-group">
+                <input type="text" class="form-control" id="chatInput" 
+                       placeholder="Ask a question..." onkeypress="handleChatKeypress(event)">
+                <button class="btn btn-primary" onclick="sendChatMessage()">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Document Detail Modal -->
+    <div class="modal fade" id="documentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentModalTitle">Document Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="documentModalBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = window.location.origin;
+        let chatHistory = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadDocuments();
+            loadRecentDocuments();
+            loadDocumentFilters();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Enter key for searches
+            document.getElementById('quickSearchQuery').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') quickSearch();
+            });
+            document.getElementById('searchQuery').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+
+            // Drag and drop
+            const uploadZone = document.getElementById('uploadZone');
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, preventDefaults, false);
+            });
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => uploadZone.classList.add('dragover'));
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => uploadZone.classList.remove('dragover'));
+            });
+            uploadZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length) uploadFile(files[0]);
+            });
+        }
+
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // ==================== SECTION NAVIGATION ====================
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionName + 'Section').classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.section === sectionName);
+            });
+        }
+
+        // ==================== STATS & DOCUMENTS ====================
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stats`);
+                const data = await response.json();
+                document.getElementById('totalDocs').textContent = data.documents || 0;
+                document.getElementById('totalChunks').textContent = data.chunks || 0;
+                document.getElementById('totalTables').textContent = data.tables || 0;
+                document.getElementById('totalImages').textContent = data.images || 0;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        async function loadDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/api/documents?limit=50`);
+                const data = await response.json();
+                const list = document.getElementById('documentList');
+                
+                if (!data.documents || data.documents.length === 0) {
+                    list.innerHTML = '<div class="text-center text-muted py-4">No documents uploaded yet</div>';
+                    return;
+                }
+
+                list.innerHTML = data.documents.map(doc => `
+                    <div class="document-item" onclick="showDocument('${doc.doc_id}')">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>${doc.filename}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-file-text me-1"></i>${doc.page_count} pages • 
+                                    <i class="bi bi-list me-1"></i>${doc.chunk_count} chunks • 
+                                    <i class="bi bi-table me-1"></i>${doc.table_count} tables
+                                </small>
+                            </div>
+                            <span class="badge bg-primary">${doc.document_type || 'PDF'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load documents:', error);
+                document.getElementById('documentList').innerHTML = 
+                    '<div class="text-center text-danger py-4">Failed to load documents</div>';
+            }
+        }
+
+        async function loadRecentDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/api/documents?limit=4`);
+                const data = await response.json();
+                const container = document.getElementById('recentDocuments');
+                
+                if (!data.documents || data.documents.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center text-muted py-4">No documents yet. Upload some PDFs to get started!</div>';
+                    return;
+                }
+
+                container.innerHTML = data.documents.map(doc => `
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card h-100" style="cursor:pointer" onclick="showDocument('${doc.doc_id}')">
+                            <div class="card-body">
+                                <h6 class="card-title text-truncate">
+                                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i>
+                                    ${doc.filename}
+                                </h6>
+                                <p class="card-text small text-muted mb-0">
+                                    ${doc.page_count} pages • ${doc.chunk_count} chunks
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load recent documents:', error);
+            }
+        }
+
+        async function loadDocumentFilters() {
+            try {
+                const response = await fetch(`${API_BASE}/api/documents?limit=100`);
+                const data = await response.json();
+                const select = document.getElementById('searchDocFilter');
+                select.innerHTML = '<option value="">All Documents</option>';
+                
+                if (data.documents) {
+                    data.documents.forEach(doc => {
+                        select.innerHTML += `<option value="${doc.doc_id}">${doc.filename}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load document filters:', error);
+            }
+        }
+
+        async function showDocument(docId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/documents/${docId}`);
+                const doc = await response.json();
+
+                const modal = new bootstrap.Modal(document.getElementById('documentModal'));
+                document.getElementById('documentModalTitle').textContent = doc.filename;
+                
+                let contentPreview = '';
+                if (doc.chunks && doc.chunks.length > 0) {
+                    contentPreview = doc.chunks.slice(0, 3).map(c => c.text).join('\n\n---\n\n');
+                }
+
+                document.getElementById('documentModalBody').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-info-circle me-2"></i>Document Info</h6>
+                            <table class="table table-sm">
+                                <tr><td class="text-muted">Title</td><td>${doc.title || doc.filename}</td></tr>
+                                <tr><td class="text-muted">Author</td><td>${doc.author || 'Unknown'}</td></tr>
+                                <tr><td class="text-muted">Pages</td><td>${doc.page_count}</td></tr>
+                                <tr><td class="text-muted">Language</td><td>${doc.language || 'Unknown'}</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-bar-chart me-2"></i>Content Stats</h6>
+                            <table class="table table-sm">
+                                <tr><td class="text-muted">Sections</td><td>${doc.section_count || 0}</td></tr>
+                                <tr><td class="text-muted">Chunks</td><td>${doc.chunk_count}</td></tr>
+                                <tr><td class="text-muted">Tables</td><td>${doc.table_count}</td></tr>
+                                <tr><td class="text-muted">Images</td><td>${doc.image_count}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    ${contentPreview ? `
+                        <div class="mt-3">
+                            <h6><i class="bi bi-file-text me-2"></i>Content Preview</h6>
+                            <div class="doc-content">${escapeHtml(contentPreview.substring(0, 1500))}${contentPreview.length > 1500 ? '...' : ''}</div>
+                        </div>
+                    ` : ''}
+                    <div class="mt-3">
+                        <button class="btn btn-danger btn-sm" onclick="deleteDocument('${doc.doc_id}')">
+                            <i class="bi bi-trash me-1"></i> Delete Document
+                        </button>
+                    </div>
+                `;
+                modal.show();
+            } catch (error) {
+                console.error('Failed to load document:', error);
+                showToast('Failed to load document details', 'danger');
+            }
+        }
+
+        async function deleteDocument(docId) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/documents/${docId}`, { method: 'DELETE' });
+                const data = await response.json();
+
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('documentModal')).hide();
+                    loadStats();
+                    loadDocuments();
+                    loadRecentDocuments();
+                    loadDocumentFilters();
+                    showToast('Document deleted successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Failed to delete document:', error);
+                showToast('Failed to delete document', 'danger');
+            }
+        }
+
+        // ==================== UPLOAD ====================
+        async function uploadFile(file) {
+            if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
+                showToast('Please select a PDF file', 'warning');
+                return;
+            }
+
+            const progress = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const status = document.getElementById('uploadStatus');
+            const result = document.getElementById('uploadResult');
+
+            progress.style.display = 'block';
+            result.style.display = 'none';
+            progressBar.style.width = '0%';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                let progressValue = 0;
+                const progressInterval = setInterval(() => {
+                    progressValue += Math.random() * 10;
+                    if (progressValue > 90) progressValue = 90;
+                    progressBar.style.width = `${progressValue}%`;
+                }, 500);
+
+                status.textContent = 'Processing PDF...';
+
+                const response = await fetch(`${API_BASE}/api/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+
+                const data = await response.json();
+
+                if (data.success) {
+                    status.textContent = 'Upload complete!';
+                    result.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5><i class="bi bi-check-circle me-2"></i>Document Processed Successfully</h5>
+                            <ul class="mb-0">
+                                <li><strong>Pages:</strong> ${data.page_count}</li>
+                                <li><strong>Chunks Created:</strong> ${data.chunks_created}</li>
+                                <li><strong>Tables Extracted:</strong> ${data.tables_extracted}</li>
+                                <li><strong>Processing Time:</strong> ${data.processing_time.toFixed(2)}s</li>
+                            </ul>
+                        </div>
+                    `;
+                    result.style.display = 'block';
+                    loadStats();
+                    loadDocuments();
+                    loadRecentDocuments();
+                    loadDocumentFilters();
+                    showToast('Document uploaded successfully!', 'success');
+                } else {
+                    throw new Error(data.detail || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload failed:', error);
+                status.textContent = 'Upload failed';
+                result.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>${error.message}</div>`;
+                result.style.display = 'block';
+                showToast('Upload failed: ' + error.message, 'danger');
+            }
+        }
+
+        // ==================== SEARCH ====================
+        function quickSearch() {
+            const query = document.getElementById('quickSearchQuery').value.trim();
+            if (!query) return;
+            document.getElementById('searchQuery').value = query;
+            showSection('search');
+            performSearch();
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) {
+                showToast('Please enter a search query', 'warning');
+                return;
+            }
+
+            const limit = document.getElementById('searchLimit').value;
+            const docFilter = document.getElementById('searchDocFilter').value;
+            const spinner = document.getElementById('searchSpinner');
+            const btn = document.getElementById('searchBtn');
+            const container = document.getElementById('searchResults');
+
+            spinner.style.display = 'inline-block';
+            btn.disabled = true;
+            
+            // Show loading state with AI thinking indicator
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="text-muted"><i class="bi bi-robot me-2"></i>AI is analyzing your query...</p>
+                </div>
+            `;
+
+            try {
+                let url = `${API_BASE}/api/search?query=${encodeURIComponent(query)}&limit=${limit}&with_ai=true`;
+                if (docFilter) url += `&document_id=${docFilter}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                console.log('Search response:', data); // Debug log
+                displaySearchResults(data);
+            } catch (error) {
+                console.error('Search failed:', error);
+                showToast('Search failed. Please try again.', 'danger');
+                container.innerHTML = `
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 4rem; opacity: 0.3;"></i>
+                        <p class="mt-3">Search failed. Please try again.</p>
+                    </div>
+                `;
+            } finally {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function displaySearchResults(data) {
+            const container = document.getElementById('searchResults');
+            
+            if (data.total_results === 0 && !data.ai_answer) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-emoji-frown" style="font-size: 4rem; opacity: 0.3;"></i>
+                        <p class="mt-3">No results found for "${escapeHtml(data.query)}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">
+                        Found ${data.total_results} results in ${data.latency_ms.toFixed(0)}ms
+                        ${getKeywordsDisplay(data.query)}
+                    </span>
+                </div>
+            `;
+
+            // AI Answer Section - Show at the TOP
+            if (data.ai_answer) {
+                const sourcesHtml = data.ai_sources && data.ai_sources.length > 0 
+                    ? data.ai_sources.map(s => `
+                        <span class="metadata-badge">
+                            <i class="bi ${s.type === 'table' ? 'bi-table' : 'bi-file-earmark'}"></i> 
+                            ${escapeHtml(s.document_name)} - Page ${s.page}
+                        </span>
+                    `).join('')
+                    : '';
+                
+                html += `
+                    <div class="ai-answer-card mb-4">
+                        <div class="ai-answer-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-lightbulb me-2"></i>AI Suggestion
+                                ${data.ai_provider ? `<small class="ms-2" style="opacity:0.8">(${data.ai_provider})</small>` : ''}
+                            </h5>
+                        </div>
+                        <div class="ai-answer-body">
+                            <div class="ai-answer-content">${formatAIAnswer(data.ai_answer)}</div>
+                            ${sourcesHtml ? `
+                                <div class="ai-sources mt-3 pt-3 border-top">
+                                    <small class="text-muted"><i class="bi bi-journal-text me-1"></i>Sources:</small>
+                                    <div class="mt-1">${sourcesHtml}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (data.total_results > 0) {
+                // Show a note that AI is unavailable
+                html += `
+                    <div class="alert alert-light border mb-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>AI suggestion unavailable. Make sure Ollama is running for AI-powered answers.</small>
+                    </div>
+                `;
+            }
+
+            if (data.results && data.results.length > 0) {
+                html += '<h5 class="mb-3"><i class="bi bi-file-text me-2"></i>Text Results</h5>';
+                data.results.forEach((result, index) => {
+                    const relevance = getRelevanceInfo(result);
+                    const scorePercent = Math.round((result.score || 0) * 100);
+                    const sectionInfo = result.section ? `<span class="metadata-badge"><i class="bi bi-list-nested"></i> ${escapeHtml(result.section)}</span>` : '';
+                    
+                    html += `
+                        <div class="result-card">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="metadata-badge"><i class="bi bi-file-earmark"></i> ${escapeHtml(result.document_name)}</span>
+                                    <span class="metadata-badge"><i class="bi bi-bookmark"></i> Page ${result.page}</span>
+                                    ${sectionInfo}
+                                    <span class="metadata-badge text-primary"><i class="bi bi-graph-up"></i> ${scorePercent}%</span>
+                                </div>
+                                <span class="relevance-badge ${relevance.class}">
+                                    <i class="bi ${relevance.icon}"></i> ${relevance.text}
+                                </span>
+                            </div>
+                            <p class="mb-0 result-text">${highlightText(result.text, data.query)}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            if (data.tables && data.tables.length > 0) {
+                html += '<h5 class="mt-4 mb-3"><i class="bi bi-table me-2"></i>Table Results</h5>';
+                data.tables.forEach(table => {
+                    const matchInfo = table.total_matching > 0 
+                        ? `<span class="badge bg-success ms-2">${table.total_matching} matches</span>` 
+                        : '';
+                    html += `
+                        <div class="result-card table-result">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="metadata-badge"><i class="bi bi-file-earmark"></i> ${escapeHtml(table.document_name)}</span>
+                                    <span class="metadata-badge"><i class="bi bi-bookmark"></i> Page ${table.page}</span>
+                                    ${matchInfo}
+                                </div>
+                            </div>
+                            ${table.matching_rows && table.matching_rows.length > 0 ? `
+                                <div class="table-preview">
+                                    <table class="table table-sm table-bordered table-striped">
+                                        <thead class="table-dark"><tr>${table.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+                                        <tbody>
+                                            ${table.matching_rows.slice(0, 10).map(row => `
+                                                <tr>${table.headers.map(h => `<td>${highlightText(String(row[h] || ''), data.query)}</td>`).join('')}</tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                    ${table.total_matching > 10 ? `<small class="text-muted">Showing 10 of ${table.total_matching} matching rows</small>` : ''}
+                                </div>
+                            ` : `
+                                <div class="table-preview">
+                                    <table class="table table-sm table-bordered table-striped">
+                                        <thead class="table-dark"><tr>${table.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+                                        <tbody>
+                                            ${(table.all_rows || []).slice(0, 5).map(row => `
+                                                <tr>${table.headers.map(h => `<td>${escapeHtml(String(row[h] || ''))}</td>`).join('')}</tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `}
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
+        function getKeywordsDisplay(query) {
+            if (!query) return '';
+            const keywords = query.split(' ')
+                .map(w => w.toLowerCase().trim())
+                .filter(w => w.length > 2 && !STOP_WORDS.has(w));
+            
+            if (keywords.length === 0) return '';
+            
+            return ` | <span class="text-primary">Keywords: ${keywords.map(k => `<strong>${escapeHtml(k)}</strong>`).join(', ')}</span>`;
+        }
+
+        function getRelevanceInfo(result) {
+            const matchType = result.match_type || '';
+            const relevance = result.relevance || '';
+            
+            if (matchType === 'exact' || relevance === 'Exact Match') {
+                return { text: 'Exact Match', icon: 'bi-check-circle-fill', class: 'relevance-exact' };
+            } else if (matchType === 'phrase' || relevance === 'Phrase Match') {
+                return { text: 'Phrase Match', icon: 'bi-check-circle', class: 'relevance-phrase' };
+            } else if (matchType === 'all_words' || relevance === 'All Words') {
+                return { text: 'All Words', icon: 'bi-bullseye', class: 'relevance-high' };
+            } else if (matchType === 'partial' || (relevance && relevance.includes('Words'))) {
+                return { text: relevance || 'Partial', icon: 'bi-check', class: 'relevance-medium' };
+            }
+            return { text: 'Related', icon: 'bi-link-45deg', class: 'relevance-related' };
+        }
+
+        // Stop words to exclude from highlighting
+        const STOP_WORDS = new Set([
+            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+            'should', 'may', 'might', 'must', 'shall', 'can', 'to', 'of', 'in',
+            'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through',
+            'and', 'but', 'if', 'or', 'so', 'than', 'too', 'very', 'just',
+            'it', 'its', 'you', 'your', 'we', 'our', 'they', 'them', 'their',
+            'this', 'that', 'these', 'those', 'what', 'which', 'who', 'whom',
+            'how', 'when', 'where', 'why', 'all', 'each', 'every', 'both',
+            'few', 'more', 'most', 'other', 'some', 'such', 'no', 'not',
+            'only', 'own', 'same', 'any', 'many', 'much', 'here', 'there',
+            'now', 'then', 'also', 'about', 'like', 'get', 'got', 'make'
+        ]);
+
+        function highlightText(text, query) {
+            if (!query) return escapeHtml(text);
+            // Filter out stop words from highlighting - only highlight meaningful keywords
+            const words = query.split(' ')
+                .map(w => w.toLowerCase().trim())
+                .filter(w => w.length > 2 && !STOP_WORDS.has(w));
+            
+            if (words.length === 0) return escapeHtml(text);
+            
+            let result = escapeHtml(text);
+            words.forEach(word => {
+                const regex = new RegExp(`\\b(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'gi');
+                result = result.replace(regex, '<span class="highlight">$1</span>');
+            });
+            return result;
+        }
+
+        function formatAIAnswer(text) {
+            if (!text) return '';
+            
+            // Convert markdown-style formatting to HTML
+            let html = escapeHtml(text);
+            
+            // Convert markdown tables to HTML tables
+            const tableRegex = /\|(.+)\|\n\|[-|\s]+\|\n((?:\|.+\|\n?)+)/g;
+            html = html.replace(tableRegex, (match, headerRow, bodyRows) => {
+                const headers = headerRow.split('|').filter(h => h.trim()).map(h => `<th>${h.trim()}</th>`).join('');
+                const rows = bodyRows.trim().split('\n').map(row => {
+                    const cells = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+                return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+            });
+            
+            // Convert **bold** to <strong>
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert *italic* to <em>
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            
+            // Convert `code` to <code>
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Convert bullet points
+            html = html.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+            
+            // Convert numbered lists
+            html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+            
+            // Convert newlines to paragraphs (but not inside lists or tables)
+            html = html.split('\n\n').map(para => {
+                if (para.includes('<table>') || para.includes('<ul>') || para.includes('<ol>') || para.includes('<li>')) {
+                    return para;
+                }
+                return para.trim() ? `<p>${para.replace(/\n/g, '<br>')}</p>` : '';
+            }).join('');
+            
+            return html;
+        }
+
+        // ==================== CHAT ====================
+        function toggleChat() {
+            const chatWindow = document.getElementById('chatWindow');
+            const fab = document.getElementById('chatFab');
+            chatWindow.classList.toggle('open');
+            fab.innerHTML = chatWindow.classList.contains('open') 
+                ? '<i class="bi bi-x-lg"></i>' 
+                : '<i class="bi bi-chat-dots"></i>';
+        }
+
+        function handleChatKeypress(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+            addChatBubble('user', message);
+            
+            const typingId = addTypingIndicator();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/ask`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: message,
+                        num_context_chunks: 8,
+                        search_type: 'hybrid',
+                        mode: 'concise'
+                    })
+                });
+
+                const data = await response.json();
+                removeTypingIndicator(typingId);
+                
+                let sources = '';
+                if (data.sources && data.sources.length > 0) {
+                    const uniqueSources = [...new Set(data.sources.map(s => `${s.document_name} p.${s.page}`))].slice(0, 3);
+                    sources = uniqueSources.join(' • ');
+                }
+                
+                addChatBubble('assistant', data.answer, sources);
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                addChatBubble('assistant', 'Sorry, I encountered an error. Please try again.');
+            }
+        }
+
+        function addChatBubble(role, content, sources = '') {
+            const chatBody = document.getElementById('chatBody');
+            const div = document.createElement('div');
+            div.className = `chat-message ${role}`;
+            
+            let html = `<div class="chat-bubble">${formatChatMessage(content)}</div>`;
+            if (sources) {
+                html += `<div class="chat-sources"><i class="bi bi-journal-text me-1"></i>${sources}</div>`;
+            }
+            
+            div.innerHTML = html;
+            chatBody.appendChild(div);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function formatChatMessage(text) {
+            return escapeHtml(text)
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function addTypingIndicator() {
+            const chatBody = document.getElementById('chatBody');
+            const id = 'typing-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'chat-message assistant';
+            div.innerHTML = `
+                <div class="chat-bubble">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            chatBody.appendChild(div);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return id;
+        }
+
+        function removeTypingIndicator(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        // ==================== UTILITIES ====================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            container.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 5000 });
+            bsToast.show();
+            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+        }
+    </script>
+</body>
+</html>
