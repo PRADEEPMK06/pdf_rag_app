@@ -1,7 +1,3 @@
-"""
-PDF Knowledge Base - Main Application
-FastAPI routes and server entry point
-"""
 import os
 import time
 import shutil
@@ -28,11 +24,6 @@ from documents import (
 from vector_db import VectorStore, HybridSearchEngine
 from mongodb_search import MongoDBSearchService
 
-# =============================================================================
-# Initialize Services
-# =============================================================================
-
-# Initialize MongoDB client
 try:
     mongo_client = MongoClient(
         MONGODB_URL,
@@ -42,19 +33,18 @@ try:
         tlsAllowInvalidCertificates=False
     )
     db = mongo_client[MONGODB_DATABASE]
-    # Test the connection
+  
     mongo_client.admin.command('ping')
-    print("✅ Successfully connected to MongoDB!")
+    print("connected to MongoDB!")
     mongodb_connected = True
 
-    # Initialize MongoDB search service
     mongodb_search = MongoDBSearchService(MONGODB_URL, MONGODB_DATABASE)
-    print("✅ MongoDB search service initialized!")
+    print("MongoDB search service started")
 
 except Exception as e:
-    print(f"❌ Failed to connect to MongoDB: {e}")
-    print("📝 MongoDB features will be disabled. You can still use the app with local storage.")
-    print("🔧 To fix this:")
+    print(f"Failed to connect to MongoDB: {e}")
+    print("MongoDB features will be disabled. You can still use the app with local storage.")
+    print("To fix this:")
     print("   1. Check MongoDB Atlas Network Access settings")
     print("   2. Add your IP address to the whitelist")
     print("   3. Verify database user credentials")
@@ -68,16 +58,10 @@ store = PersistentDocumentStore(INDEX_DIR)
 search_engine = TFIDFSearchEngine()
 llm_service = LLMService()
 
-# Initialize Vector Store
 vector_store = VectorStore()
 hybrid_search = HybridSearchEngine(vector_store, search_engine)
 
-# Load existing index
 search_engine.load_index(INDEX_DIR / "search_index.json")
-
-# =============================================================================
-# FastAPI Application
-# =============================================================================
 
 app = FastAPI(
     title="PDF Knowledge Base API",
@@ -94,10 +78,6 @@ app.add_middleware(
 )
 
 
-# =============================================================================
-# Frontend Route
-# =============================================================================
-
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """Serve the frontend HTML"""
@@ -106,11 +86,6 @@ async def root():
         with open(html_path, 'r', encoding='utf-8') as f:
             return HTMLResponse(content=f.read())
     return HTMLResponse(content="<h1>PDF Knowledge Base</h1><p>Frontend not found</p>")
-
-
-# =============================================================================
-# Status & Stats Routes
-# =============================================================================
 
 @app.get("/api/status")
 async def api_status():
@@ -152,11 +127,10 @@ async def reindex_all_documents():
     total_chunks = 0
     errors = []
     
-    # Clear existing vector index
     vector_store.embeddings = np.array([])
     vector_store.metadata = []
     
-    # Iterate through all document folders
+     
     for doc_folder in documents_dir.iterdir():
         if not doc_folder.is_dir():
             continue
@@ -174,7 +148,7 @@ async def reindex_all_documents():
             doc_id = metadata.get("doc_id", doc_folder.name)
             filename = metadata.get("filename", "Unknown")
             
-            # Add all chunks to vector store
+      
             vector_docs = []
             for chunk in chunks:
                 vector_docs.append({
@@ -232,11 +206,7 @@ async def llm_status():
     
     return status
 
-
-# =============================================================================
-# Upload Routes
-# =============================================================================
-
+ 
 @app.post("/api/upload", response_model=UploadResponse)
 async def upload_pdf(file: UploadFile = File(...)):
     """Upload and process a PDF document"""
@@ -282,11 +252,7 @@ async def legacy_upload(file: UploadFile = File(...)):
     """Legacy upload endpoint"""
     return await upload_pdf(file)
 
-
-# =============================================================================
-# Document Routes
-# =============================================================================
-
+ 
 @app.get("/api/documents")
 async def list_documents(limit: int = 50, offset: int = 0):
     """List all documents"""
@@ -350,14 +316,14 @@ async def delete_document(doc_id: str):
         except Exception as e:
             print(f"Error during folder deletion: {e}")
     
-    # Remove from search engine
+   
     chunks_to_remove = [cid for cid in search_engine.documents.keys() if cid.startswith(doc_id)]
     for chunk_id in chunks_to_remove:
         search_engine.documents.pop(chunk_id, None)
         search_engine.doc_metadata.pop(chunk_id, None)
         search_engine.tf_vectors.pop(chunk_id, None)
     
-    # Remove from vector store
+  
     vector_store.delete_document(doc_id)
     
     search_engine.save_index(INDEX_DIR / "search_index.json")
@@ -387,7 +353,6 @@ async def reprocess_all_tables():
         if not folder_path:
             continue
             
-        # Find the PDF file in the document folder
         pdf_path = None
         folder = Path(folder_path)
         if folder.exists():
@@ -400,15 +365,12 @@ async def reprocess_all_tables():
             errors.append(f"No PDF found for document {doc_id}")
             continue
         
-        try:
-            # Re-extract tables with improved header detection
+        try: 
             new_tables = extract_tables_with_pdfplumber(pdf_path)
-            
-            # Assign document_id to each table
+             
             for table in new_tables:
                 table["document_id"] = doc_id
-            
-            # Update the document's tables
+             
             doc_data = store.get_document(doc_id)
             if doc_data:
                 doc_data["tables"] = new_tables
@@ -416,13 +378,12 @@ async def reprocess_all_tables():
                 tables_updated += len(new_tables)
             
             processed += 1
-            print(f"✅ Reprocessed tables for: {doc.get('filename', doc_id)}")
+            print(f" Reprocessed tables for: {doc.get('filename', doc_id)}")
             
         except Exception as e:
             errors.append(f"Error processing {doc_id}: {str(e)}")
-            print(f"❌ Error reprocessing {doc_id}: {e}")
-    
-    # Save the updated store
+            print(f" Error reprocessing {doc_id}: {e}")
+
     store.save_index()
     
     return {
@@ -445,8 +406,7 @@ async def reprocess_document_tables(doc_id: str):
     folder_path = doc.get("folder_path")
     if not folder_path:
         raise HTTPException(status_code=400, detail="Document folder not found")
-    
-    # Find the PDF file
+   
     pdf_path = None
     folder = Path(folder_path)
     if folder.exists():
@@ -459,14 +419,12 @@ async def reprocess_document_tables(doc_id: str):
         raise HTTPException(status_code=400, detail="PDF file not found in document folder")
     
     try:
-        # Re-extract tables with improved header detection
         new_tables = extract_tables_with_pdfplumber(pdf_path)
         
-        # Assign document_id to each table
+        
         for table in new_tables:
             table["document_id"] = doc_id
         
-        # Update the document's tables
         doc["tables"] = new_tables
         store.documents[doc_id] = doc
         store.save_index()
@@ -482,9 +440,6 @@ async def reprocess_document_tables(doc_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to reprocess tables: {str(e)}")
 
 
-# =============================================================================
-# Search Routes
-# =============================================================================
 
 @app.get("/api/search", response_model=SearchResponse)
 async def search(
@@ -504,38 +459,30 @@ async def search(
     """
     start_time = time.time()
 
-    # Use MongoDB search if available and requested
     if search_type == "mongodb" and mongodb_connected and mongodb_search:
         print(f"🔍 Using MongoDB search for query: '{query}'")
         results = mongodb_search.search_chunks(query, limit)
         search_type_used = "mongodb"
     else:
-        # Choose local search method
         if search_type == "exact":
             results = hybrid_search.search_exact(query, limit)
         elif search_type == "semantic":
             results = vector_store.search(query, limit, min_score=0.1)
         elif search_type == "keyword":
             results = search_engine.smart_search(query, limit)
-        else:  # auto (default) - best of both worlds
+        else: 
             results = hybrid_search.search(query, limit)
         search_type_used = search_type
 
-    # Search tables with improved extraction
     tables = search_tables(query, store, limit=5)
     
-    # Generate AI answer if requested
     ai_answer = None
     ai_sources = []
     ai_provider = None
     
     if with_ai and (results or tables):
         try:
-            # Format table context for AI
             table_context = format_table_for_context(tables)
-            
-            # Filter results to only those with meaningful relevance
-            # This ensures AI gets quality context, not just any search results
             query_lower = query.lower()
             topic_words = set()
             for word in query_lower.split():
@@ -544,24 +491,19 @@ async def search(
                                'do', 'does', 'did', 'can', 'could', 'would', 'should', 'will',
                                'define', 'explain', 'describe', 'tell', 'me', 'about'} and len(word) > 2:
                     topic_words.add(word)
-            
-            # Score results by topic relevance
+      
             def context_relevance(r):
                 text = r.get('full_text', r.get('text', '')).lower()
                 base_score = r.get('score', 0)
-                # Count topic matches
+        
                 matches = sum(1 for w in topic_words if w in text)
                 topic_boost = (matches / max(len(topic_words), 1)) * 0.4
                 return base_score + topic_boost
             
-            # Sort by relevance and take best context chunks for AI
             sorted_results = sorted(results, key=context_relevance, reverse=True)
-            ai_context = sorted_results[:6]  # Give AI fewer but more relevant chunks
-            
-            # Get AI answer
+            ai_context = sorted_results[:6] 
             ai_answer, ai_provider = await llm_service.answer_question(query, ai_context, table_context)
-            
-            # Build source references for AI answer
+      
             seen_sources = set()
             for r in results[:5]:
                 source_key = f"{r.get('document_name', 'Unknown')}_{r.get('page', 1)}"
@@ -627,10 +569,6 @@ async def legacy_search(query: str, limit: int = 10):
     }
 
 
-# =============================================================================
-# AI Q&A Routes
-# =============================================================================
-
 @app.post("/api/ask", response_model=QuestionResponse)
 async def ask_question(request: QuestionRequest):
     """Ask a question and get an AI-generated answer - fast and accurate"""
@@ -641,7 +579,7 @@ async def ask_question(request: QuestionRequest):
                            ['about', 'summary', 'summarize', 'overview', 'describe the document',
                             'what is this', 'what are these', 'tell me about'])
     
-    # Use optimized context retrieval for Q&A
+    
     results = hybrid_search.get_context_for_question(
         request.question, 
         request.num_context_chunks
@@ -650,7 +588,7 @@ async def ask_question(request: QuestionRequest):
     if request.document_id:
         results = [r for r in results if r.get("document_id") == request.document_id]
     
-    # Fallback for "about" questions with no results
+   
     if not results and is_about_question:
         all_docs = store.get_all_documents()
         if request.document_id:
@@ -672,19 +610,19 @@ async def ask_question(request: QuestionRequest):
                     })
             results.extend(sorted(doc_chunks, key=lambda x: x.get('page', 1))[:2])
     
-    # Get table context (fewer tables for speed)
+    
     table_results = search_tables(request.question, store, limit=2)
     if request.document_id:
         table_results = [t for t in table_results if t.get("document_id") == request.document_id]
     
     table_context = format_table_for_context(table_results)
     
-    # Get AI answer
+    
     answer, provider = await llm_service.answer_question(request.question, results, table_context)
     
     latency_ms = (time.time() - start_time) * 1000
     
-    # Build sources with match type info
+
     sources = [
         {
             "document_name": r.get("document_name", "Unknown"),
@@ -733,16 +671,12 @@ async def ask_question_get(
     return await ask_question(request)
 
 
-# =============================================================================
-# Vector Index Management
-# =============================================================================
-
 @app.post("/api/vectors/rebuild")
 async def rebuild_vector_index():
     """Rebuild vector index from existing keyword index"""
     start_time = time.time()
     
-    # Get all chunks from keyword search engine
+  
     docs_to_add = []
     for chunk_id, text in search_engine.documents.items():
         metadata = search_engine.doc_metadata.get(chunk_id, {})
@@ -769,10 +703,6 @@ async def vector_stats():
     """Get vector store statistics"""
     return vector_store.get_stats()
 
-
-# =============================================================================
-# Entry Point
-# =============================================================================
 
 if __name__ == "__main__":
     import uvicorn
