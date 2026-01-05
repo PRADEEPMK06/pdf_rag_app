@@ -1,6 +1,4 @@
-"""
-Search Engine and AI/LLM Services
-"""
+
 import re
 import math
 import httpx
@@ -14,13 +12,8 @@ from config import (
     OLLAMA_BASE_URL, OLLAMA_MODEL, LLM_PROVIDER
 )
 
-# =============================================================================
-# LLM Service
-# =============================================================================
-
 class LLMService:
-    """LLM service supporting OpenAI and Ollama"""
-    
+   
     def __init__(self):
         self.provider = LLM_PROVIDER
         self.client = httpx.AsyncClient(timeout=60.0)
@@ -31,7 +24,7 @@ class LLMService:
     def _build_prompt(self, question: str, context_chunks: List[Dict], table_context: str = "") -> str:
         """Build RAG prompt - accurate and concise by default, detailed when asked"""
         
-        # Extract key terms from the question for relevance filtering
+        
         question_lower = question.lower()
         question_words = set()
         for word in question_lower.split():
@@ -42,16 +35,15 @@ class LLMService:
                            'define', 'explain', 'describe', 'tell', 'me', 'about'} and len(word) > 2:
                 question_words.add(word)
         
-        # Score and sort chunks by relevance to question
+        
         def chunk_relevance(chunk):
             text = chunk.get('full_text', chunk.get('text', '')).lower()
             score = chunk.get('score', 0)
             
-            # Boost chunks that contain the key terms
+            
             term_matches = sum(1 for w in question_words if w in text)
             term_boost = term_matches / max(len(question_words), 1) * 0.3
             
-            # Boost chunks that have key terms in prominent positions
             prominence_boost = 0
             for w in question_words:
                 if text.startswith(w) or f"\n{w}" in text or f". {w}" in text:
@@ -59,10 +51,9 @@ class LLMService:
             
             return score + term_boost + prominence_boost
         
-        # Sort chunks by relevance
         sorted_chunks = sorted(context_chunks, key=chunk_relevance, reverse=True)
         
-        # Build context - prioritize most relevant chunks
+
         context_parts = []
         for c in sorted_chunks:
             source = f"[{c.get('document_name', 'Unknown')}, Page {c.get('page', '?')}]"
@@ -75,46 +66,33 @@ class LLMService:
         if table_context:
             full_context += f"\n\n--- TABLE DATA ---\n{table_context}"
         
-        # Extract the exact term the user is asking about
         question_lower = question.lower()
         
-        # CRITICAL: Detect method name queries and ensure exact matching
-        # This prevents confusion between similar methods like headSet vs tailSet
         method_terms = ['headset', 'tailset', 'subset', 'method', 'function']
         is_method_query = any(term in question_lower for term in method_terms)
         
-        # Detect table/data queries (marks, students, scores, records, etc.)
         table_query_terms = ['student', 'score', 'mark', 'grade', 'percent', 'above', 'below', 
                             'more than', 'less than', 'greater', 'who scored', 'top', 'result',
                             'record', 'data', 'list all', 'show all', 'find all']
         is_table_query = any(term in question_lower for term in table_query_terms)
         
-        # Detect question intent
+    
         question_lower = question.lower()
         
-        # Check for detailed explanation requests
         wants_detail = any(word in question_lower for word in [
             'explain', 'describe', 'elaborate', 'in detail', 'detailed',
             'tell me more', 'how does', 'why does', 'what exactly', 'thoroughly'
         ])
-        
-        # Check for list requests
         is_list_question = any(word in question_lower for word in [
             'list', 'what are', 'name all', 'enumerate', 'give me all', 'types of',
             'all methods', 'all the', 'methods of', 'how many'
         ])
-        
-        # Check for definition/simple questions
         is_definition = any(word in question_lower for word in [
             'what is', 'define', 'meaning of', 'what does'
         ]) and not wants_detail
-        
-        # Check for example requests
         wants_examples = any(word in question_lower for word in [
             'example', 'show me', 'demonstrate', 'code', 'sample'
         ])
-        
-        # Special instructions for table/data queries
         if is_table_query and table_context:
             instructions = """INSTRUCTIONS FOR TABLE DATA QUERIES:
 1. Present the data in a CLEAR TABLE FORMAT with proper headers
@@ -159,7 +137,7 @@ class LLMService:
 4. Use ONLY the context provided"""
             
         else:
-            # Default: Short, accurate, direct answer
+           
             instructions = """INSTRUCTIONS:
 1. Answer in 1-3 sentences
 2. Be DIRECT and ACCURATE - answer EXACTLY what was asked
@@ -169,28 +147,23 @@ class LLMService:
 6. Use ONLY the context provided
 7. If the question asks about a general concept, explain that concept
 8. Do NOT jump to specific examples unless asked"""
-        
-        # CRITICAL: Detect when user asks about a GENERAL concept vs specific method
-        # This prevents AI from answering about "headSet" when asked about "navigation methods"
+       
         general_concept_indicators = ['what is', 'what are', 'define', 'meaning of', 'explain']
         is_general_question = any(ind in question_lower for ind in general_concept_indicators)
         
-        # Check if user is asking about a specific method name
         specific_methods = ['headset', 'tailset', 'subset', 'ceiling', 'floor', 'higher', 'lower']
         asking_specific_method = any(m in question_lower for m in specific_methods)
         
         if is_general_question and not asking_specific_method:
-            # User wants general explanation, NOT specific method details
+          
             instructions += """\n\nIMPORTANT - GENERAL QUESTION DETECTED:
 - The user is asking about a GENERAL CONCEPT, not a specific method
 - Provide an OVERVIEW or DEFINITION of the concept
 - Do NOT focus on one specific method/example unless asked
 - If asked "what are navigation methods", explain what navigation methods ARE in general
 - List the types/categories if relevant, but don't deep-dive into one specific method"""
-        
-        # Add special instructions for method/function queries ONLY if asking about specific method
         if is_method_query and asking_specific_method:
-            # Check which specific method the user is asking about
+            
             if 'headset' in question_lower and 'tailset' not in question_lower:
                 instructions += """\n\nCRITICAL ACCURACY REQUIREMENT:
 - The user is asking about 'headSet' (NOT tailSet)
@@ -210,12 +183,10 @@ class LLMService:
 - Only describe the specific method that matches the user's query
 - Quote the exact method name from the context"""
         
-        # Extract the main topic/subject of the question
         topic_hint = ""
         if question_words:
             topic_hint = f"\nTOPIC TO ANSWER: {', '.join(sorted(question_words)[:5])}"
         
-        # Build clearer prompt with explicit topic focus
         prompt = f"""Answer the following question using ONLY the provided context.
 
 {instructions}
