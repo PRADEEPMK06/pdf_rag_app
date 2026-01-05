@@ -212,7 +212,6 @@
             z-index: 1;
         }
 
-        /* Relevance badges */
         .relevance-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
@@ -226,7 +225,6 @@
         .relevance-medium { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
         .relevance-related { background: linear-gradient(135deg, #64748b, #475569); color: white; }
 
-        /* AI Answer Card */
         .ai-answer-card {
             background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
             border: 2px solid #0ea5e9;
@@ -322,7 +320,7 @@
             padding: 0.75rem;
         }
 
-        /* Floating Chat Button */
+     
         .chat-fab {
             position: fixed;
             bottom: 30px;
@@ -345,7 +343,7 @@
             box-shadow: 0 6px 25px rgba(79, 70, 229, 0.5);
         }
 
-        /* Chat Window */
+
         .chat-window {
             position: fixed;
             bottom: 100px;
@@ -472,7 +470,6 @@
             30% { transform: translateY(-8px); }
         }
 
-        /* Toast notifications */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -480,11 +477,9 @@
             z-index: 1050;
         }
 
-        /* Section visibility */
         .section { display: none; }
         .section.active { display: block; }
 
-        /* Document content display */
         .doc-content {
             background: var(--bg-color);
             border-radius: 8px;
@@ -496,7 +491,7 @@
             white-space: pre-wrap;
         }
 
-        /* Dark mode support */
+        
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #0f172a;
@@ -511,7 +506,6 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="#" onclick="showSection('home')">
@@ -549,9 +543,9 @@
     </nav>
 
     <div class="main-container">
-        <!-- HOME Section -->
+        
         <div id="homeSection" class="section active">
-            <!-- Stats Row -->
+          
             <div class="row mb-4">
                 <div class="col-6 col-md-3">
                     <div class="card stats-card">
@@ -578,8 +572,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Quick Search -->
             <div class="search-container">
                 <h4 class="mb-3"><i class="bi bi-search me-2"></i>Quick Search</h4>
                 <div class="row">
@@ -594,8 +586,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Recent Documents -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Documents</h5>
@@ -608,7 +598,7 @@
             </div>
         </div>
 
-        <!-- DOCUMENTS Section -->
+       
         <div id="documentsSection" class="section">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -623,7 +613,6 @@
             </div>
         </div>
 
-        <!-- UPLOAD Section -->
         <div id="uploadSection" class="section">
             <div class="card">
                 <div class="card-body">
@@ -647,8 +636,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- SEARCH Section -->
+ 
         <div id="searchSection" class="section">
             <div class="search-container">
                 <h4 class="mb-3"><i class="bi bi-search me-2"></i>Advanced Search</h4>
@@ -690,13 +678,11 @@
             </div>
         </div>
     </div>
-
-    <!-- Floating Chat Button -->
+ 
     <button class="chat-fab" id="chatFab" onclick="toggleChat()">
         <i class="bi bi-chat-dots"></i>
     </button>
-
-    <!-- Chat Window -->
+ 
     <div class="chat-window" id="chatWindow">
         <div class="chat-header">
             <h5><i class="bi bi-robot me-2"></i>AI Assistant</h5>
@@ -721,11 +707,9 @@
             </div>
         </div>
     </div>
-
-    <!-- Toast Container -->
+ 
     <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Document Detail Modal -->
+ 
     <div class="modal fade" id="documentModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -742,8 +726,6 @@
     <script>
         const API_BASE = window.location.origin;
         let chatHistory = [];
-
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadStats();
             loadDocuments();
@@ -753,7 +735,7 @@
         });
 
         function setupEventListeners() {
-            // Enter key for searches
+          
             document.getElementById('quickSearchQuery').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') quickSearch();
             });
@@ -761,7 +743,7 @@
                 if (e.key === 'Enter') performSearch();
             });
 
-            // Drag and drop
+           
             const uploadZone = document.getElementById('uploadZone');
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 uploadZone.addEventListener(eventName, preventDefaults, false);
@@ -787,7 +769,7 @@
             };
         }
 
-        // ==================== SECTION NAVIGATION ====================
+       
         function showSection(sectionName) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(sectionName + 'Section').classList.add('active');
@@ -796,7 +778,7 @@
             });
         }
 
-        // ==================== STATS & DOCUMENTS ====================
+         
         async function loadStats() {
             try {
                 const response = await fetch(`${API_BASE}/api/stats`);
@@ -964,8 +946,7 @@
                 showToast('Failed to delete document', 'danger');
             }
         }
-
-        // ==================== UPLOAD ====================
+ 
         async function uploadFile(file) {
             if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
                 showToast('Please select a PDF file', 'warning');
@@ -1034,8 +1015,7 @@
                 showToast('Upload failed: ' + error.message, 'danger');
             }
         }
-
-        // ==================== SEARCH ====================
+ 
         function quickSearch() {
             const query = document.getElementById('quickSearchQuery').value.trim();
             if (!query) return;
@@ -1059,8 +1039,7 @@
 
             spinner.style.display = 'inline-block';
             btn.disabled = true;
-            
-            // Show loading state with AI thinking indicator
+             
             container.innerHTML = `
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary mb-3" role="status"></div>
@@ -1112,8 +1091,7 @@
                     </span>
                 </div>
             `;
-
-            // AI Answer Section - Show at the TOP
+ 
             if (data.ai_answer) {
                 const sourcesHtml = data.ai_sources && data.ai_sources.length > 0 
                     ? data.ai_sources.map(s => `
@@ -1143,8 +1121,7 @@
                         </div>
                     </div>
                 `;
-            } else if (data.total_results > 0) {
-                // Show a note that AI is unavailable
+            } else if (data.total_results > 0) { 
                 html += `
                     <div class="alert alert-light border mb-4">
                         <i class="bi bi-info-circle me-2"></i>
@@ -1252,8 +1229,7 @@
             }
             return { text: 'Related', icon: 'bi-link-45deg', class: 'relevance-related' };
         }
-
-        // Stop words to exclude from highlighting
+ 
         const STOP_WORDS = new Set([
             'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
             'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
@@ -1270,7 +1246,7 @@
 
         function highlightText(text, query) {
             if (!query) return escapeHtml(text);
-            // Filter out stop words from highlighting - only highlight meaningful keywords
+              
             const words = query.split(' ')
                 .map(w => w.toLowerCase().trim())
                 .filter(w => w.length > 2 && !STOP_WORDS.has(w));
@@ -1287,11 +1263,7 @@
 
         function formatAIAnswer(text) {
             if (!text) return '';
-            
-            // Convert markdown-style formatting to HTML
             let html = escapeHtml(text);
-            
-            // Convert markdown tables to HTML tables
             const tableRegex = /\|(.+)\|\n\|[-|\s]+\|\n((?:\|.+\|\n?)+)/g;
             html = html.replace(tableRegex, (match, headerRow, bodyRows) => {
                 const headers = headerRow.split('|').filter(h => h.trim()).map(h => `<th>${h.trim()}</th>`).join('');
@@ -1301,24 +1273,12 @@
                 }).join('');
                 return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
             });
-            
-            // Convert **bold** to <strong>
             html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            
-            // Convert *italic* to <em>
             html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-            
-            // Convert `code` to <code>
             html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-            
-            // Convert bullet points
             html = html.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
             html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-            
-            // Convert numbered lists
             html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-            
-            // Convert newlines to paragraphs (but not inside lists or tables)
             html = html.split('\n\n').map(para => {
                 if (para.includes('<table>') || para.includes('<ul>') || para.includes('<ol>') || para.includes('<li>')) {
                     return para;
@@ -1329,7 +1289,7 @@
             return html;
         }
 
-        // ==================== CHAT ====================
+    
         function toggleChat() {
             const chatWindow = document.getElementById('chatWindow');
             const fab = document.getElementById('chatFab');
@@ -1425,7 +1385,7 @@
             if (el) el.remove();
         }
 
-        // ==================== UTILITIES ====================
+       
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text || '';
