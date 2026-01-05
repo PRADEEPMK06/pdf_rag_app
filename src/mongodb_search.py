@@ -1,12 +1,8 @@
-"""
-MongoDB Search Service
-"""
 from pymongo import MongoClient, TEXT
 from typing import List, Dict, Any
 import re
 
 class MongoDBSearchService:
-    """Search service using MongoDB"""
 
     def __init__(self, mongodb_url: str, database_name: str):
         self.client = MongoClient(mongodb_url)
@@ -15,9 +11,6 @@ class MongoDBSearchService:
         self.chunks_collection = self.db["chunks"]
 
     def search_chunks(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """Search for text chunks in MongoDB"""
-
-        # Try text search first (if text index exists)
         try:
             text_results = list(self.chunks_collection.find(
                 {"$text": {"$search": query}},
@@ -25,7 +18,7 @@ class MongoDBSearchService:
             ).sort([("score", {"$meta": "textScore"})]).limit(limit))
 
             if text_results:
-                # Format results to match the expected structure
+
                 formatted_results = []
                 for result in text_results:
                     formatted_results.append({
@@ -41,13 +34,12 @@ class MongoDBSearchService:
         except Exception as e:
             print(f"Text search failed: {e}")
 
-        # Fallback to regex search
         regex_results = list(self.chunks_collection.find(
             {"text": {"$regex": query, "$options": "i"}},
             {"_id": 0}
         ).limit(limit))
 
-        # Format results
+      
         formatted_results = []
         for result in regex_results:
             formatted_results.append({
@@ -55,7 +47,7 @@ class MongoDBSearchService:
                 "text": result["text"],
                 "document_id": result["doc_id"],
                 "page": result["page"],
-                "score": 0.8,  # Default score for regex matches
+                "score": 0.8,  
                 "document_name": self._get_document_title(result["doc_id"]),
                 "full_text": result["text"]
             })
@@ -113,7 +105,6 @@ class MongoDBSearchService:
     def search_documents(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Search for documents by title, author, or tags"""
         try:
-            # Search in title, author, and tags
             results = list(self.documents_collection.find({
                 "$or": [
                     {"title": {"$regex": query, "$options": "i"}},
